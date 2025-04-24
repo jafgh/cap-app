@@ -1,0 +1,78 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java (for Android SDK)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Install dependencies for sdkmanager
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y unzip wget
+
+      - name: Install Android SDK command-line tools
+        run: |
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip
+          rm cmdline-tools.zip
+          mv cmdline-tools cmdline-tools-latest
+        env:
+          ANDROID_SDK_ROOT: $HOME/android-sdk
+
+      - name: Accept Android licenses
+        run: yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
+
+      - name: Install Android SDK Platforms & Build-tools
+        run: |
+          sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
+        env:
+          ANDROID_SDK_ROOT: $HOME/android-sdk
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python & Buildozer
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          pip install buildozer
+          pip install -r requirements.txt
+        shell: bash
+
+      - name: Build APK
+        working-directory: ${{ github.workspace }}
+        env:
+          ANDROIDSDK: $HOME/android-sdk
+          ANDROID_SDK_ROOT: $HOME/android-sdk
+          ANDROID_HOME: $HOME/android-sdk
+          PATH: $HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH
+        run: |
+          buildozer --verbose android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CaptchaApp-APK
+          path: ./.buildozer/android/platform/build-arm64-v8a/dists/captchaapp/bin/*.apk
