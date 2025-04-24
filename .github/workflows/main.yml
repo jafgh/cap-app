@@ -1,50 +1,56 @@
-```yaml
 name: Build Android APK
+
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     name: Build APK with Buildozer
-    # إذا كان رصيد GitHub Actions غير كافٍ، يمكنك استخدام self-hosted runner
-    runs-on: ubuntu-latest  # استخدم "self-hosted" بدل "ubuntu-latest" إذا قمت بتثبيت runner محلياً
+    # لتشغيل على GitHub-hosted runner أو self-hosted حسب الحاجة
+    runs-on: ubuntu-latest  # أو `self-hosted`
     env:
       ANDROID_SDK_ROOT: $HOME/Android/Sdk
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.9'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y python3-pip python3-setuptools openjdk-8-jdk unzip zip libgl1-mesa-dev libgles2-mesa-dev
-        pip3 install --upgrade pip
-        pip3 install buildozer
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip python3-setuptools openjdk-8-jdk unzip zip libgl1-mesa-dev libgles2-mesa-dev
+          pip3 install --upgrade pip
+          pip3 install buildozer
 
-    - name: Set up Android SDK & NDK
-      run: |
-        mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
-        cd $ANDROID_SDK_ROOT
-        wget https://dl.google.com/android/repository/commandlinetools-linux-7302050_latest.zip -O cmdline-tools.zip
-        unzip cmdline-tools.zip -d cmdline-tools
-        yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
-        $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-28" "build-tools;28.0.3" "ndk;19.2.5345600"
+      - name: Set up Android SDK & NDK
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT
+          wget https://dl.google.com/android/repository/commandlinetools-linux-7302050_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d cmdline-tools
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} \
+            "platform-tools" \
+            "platforms;android-28" \
+            "build-tools;28.0.3" \
+            "ndk;19.2.5345600"
 
-    - name: Build APK
-      run: |
-        buildozer -v android debug
+      - name: Build APK
+        run: |
+          buildozer -v android debug
 
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: captcha_solver_apk
-        path: bin/*.apk
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: captcha_solver_apk
+          path: bin/*.apk
