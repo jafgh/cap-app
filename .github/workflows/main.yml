@@ -26,36 +26,35 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y unzip wget
 
-      - name: Install Android SDK command-line tools
+      - name: Install Android SDK Command Line Tools
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
         run: |
           mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip cmdline-tools.zip
-          rm cmdline-tools.zip
-          mv cmdline-tools latest
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
+          unzip tools.zip -d temp
+          mv temp/cmdline-tools latest
+          rm -rf tools.zip temp
 
-      - name: Accept Android licenses
+      - name: Accept Android SDK Licenses
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
         run: |
-          SDKMANAGER=$(find $HOME/android-sdk -type f -name sdkmanager | head -n1)
-          echo "Using sdkmanager at: $SDKMANAGER"
-          yes | "$SDKMANAGER" --sdk_root="$HOME/android-sdk" --licenses
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
 
       - name: Install Android SDK Platforms & Build-tools
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
         run: |
-          SDKMANAGER=$(find $HOME/android-sdk -type f -name sdkmanager | head -n1)
-          echo "Using sdkmanager at: $SDKMANAGER"
-          "$SDKMANAGER" --sdk_root="$HOME/android-sdk" "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+            "platform-tools" \
+            "platforms;android-31" \
+            "build-tools;31.0.0" \
+            "ndk;23.1.7779620"
 
       - name: Install system packages for Kivy build
         run: |
-          sudo apt-get update
           sudo apt-get install -y \
             python3-dev build-essential git pkg-config \
             libgl1-mesa-dev libgles2-mesa-dev \
@@ -102,7 +101,7 @@ jobs:
         run: |
           echo "${GITHUB_TOKEN}" | gh auth login --with-token
 
-      - name: Create Release and upload APK
+      - name: Create Release and Upload APK
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -110,6 +109,6 @@ jobs:
           APK_PATH=$(find ./.buildozer -type f -name "*.apk" | head -n1)
           gh release create "$TAG" \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "Automated Build #${GITHUB_RUN_NUMBER}" \
-            --notes "APK built on $(date -u +"%Y-%m-%d %H:%M UTC")" \
+            --title "Build #${GITHUB_RUN_NUMBER}" \
+            --notes "Automated build on $(date -u +"%Y-%m-%d %H:%M UTC")" \
             "$APK_PATH"
