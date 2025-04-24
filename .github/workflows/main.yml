@@ -1,37 +1,78 @@
-name: Android CI
+# .github/workflows/build.yml
 
+name: Android CI Build
+
+# Controls when the workflow will run
 on:
+  # Triggers the workflow on push events but only for the main branch
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
+  # This workflow contains a single job called "build"
   build:
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
-
     steps:
-      - name: Checkout repository
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Android SDK directories
-        run: mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+      # Set up JDK 11 which is often required for recent Android build tools
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin' # Popular open-source distribution
 
-      - name: Download Android SDK Command Line Tools
-        run: |
-          cd $ANDROID_SDK_ROOT/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-          unzip tools.zip -d temp
-          mv temp/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
-          rm -rf tools.zip temp
+      # Set up Python
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
 
-      - name: Accept Android SDK licenses
+      # Install general dependencies and Kivy dependencies
+      - name: Install system dependencies
         run: |
-          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+          sudo apt-get update
+          sudo apt-get install -y \
+              build-essential \
+              git \
+              zip \
+              unzip \
+              pkg-config \
+              libffi-dev \
+              liblzma-dev \
+              libssl-dev \
+              autoconf \
+              automake \
+              libtool \
+              cmake \
+              libsdl2-dev \
+              libsdl2-image-dev \
+              libsdl2-mixer-dev \
+              libsdl2-ttf-dev \
+              libgstreamer1.0-dev \
+              gstreamer1.0-plugins-base \
+              gstreamer1.0-plugins-good
 
-      - name: Install required SDK packages
-        run: |
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      # Install Buildozer and Cython using pip
+      - name: Install buildozer and cython
+        run: pip install buildozer cython
+
+      # Run Buildozer command to build the Android debug APK
+      # The '-v' flag provides verbose output, helpful for debugging
+      - name: Build with Buildozer
+        run: buildozer -v android debug
+
+      # Upload the generated APK as an artifact
+      # Adjust the path if your APK name is different
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: captchaapp-apk # Name of the artifact zip file
+          path: bin/*.apk      # Path to the generated APK(s)
