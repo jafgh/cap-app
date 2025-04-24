@@ -1,3 +1,4 @@
+```yaml
 name: Build Android APK
 on:
   push:
@@ -8,7 +9,8 @@ on:
 jobs:
   build:
     name: Build APK with Buildozer
-    runs-on: ubuntu-latest
+    # إذا كان رصيد GitHub Actions غير كافٍ، يمكنك استخدام self-hosted runner
+    runs-on: ubuntu-latest  # استخدم "self-hosted" بدل "ubuntu-latest" إذا قمت بتثبيت runner محلياً
     env:
       ANDROID_SDK_ROOT: $HOME/Android/Sdk
 
