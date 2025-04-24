@@ -32,6 +32,7 @@ fullscreen = 0
 
 # (list) الاتجاهات المدعومة (اختياري)
 # orientation = portrait
+android.sdk_path = $HOME/android-sdk
 
 # ------------------------------------------------------------------
 #                        إعدادات Android
