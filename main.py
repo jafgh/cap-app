@@ -41,7 +41,7 @@ CHAR2IDX = {c: i for i, c in enumerate(CHARSET)}
 IDX2CHAR = {i: c for c, i in CHAR2IDX.items()}
 NUM_CLASSES = len(CHARSET)
 NUM_POS = 5
-ONNX_MODEL_PATH = r"C:\Users\ccl\Desktop\holako bag.onnx"
+ONNX_MODEL_PATH = r"holako bag.onnx"
 
 # --------------------------------------------------
 # Preprocessing transform
