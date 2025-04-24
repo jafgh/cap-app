@@ -1,41 +1,29 @@
-# .github/workflows/build.yml
-
 name: بناء CI للأندرويد
 
-# يتحكم في وقت تشغيل سير العمل
 on:
-  # يشغل سير العمل عند الدفع (push) ولكن فقط لفرع main
   push:
     branches: [ main ]
-
-  # يسمح لك بتشغيل هذا السير العمل يدويًا من علامة التبويب Actions
   workflow_dispatch:
 
 jobs:
-  # يحتوي سير العمل هذا على مهمة واحدة تسمى "build"
   build:
-    # نوع المُشغّل الذي ستعمل عليه المهمة
     runs-on: ubuntu-latest
 
     steps:
-      # يسحب (Checks-out) المستودع الخاص بك ضمن $GITHUB_WORKSPACE، حتى تتمكن مهمتك من الوصول إليه
       - name: سحب الكود
         uses: actions/checkout@v4
 
-      # إعداد JDK 11 المطلوب غالبًا لأدوات بناء Android الحديثة
       - name: إعداد JDK 11
         uses: actions/setup-java@v4
         with:
           java-version: '11'
-          distribution: 'temurin' # توزيعة مفتوحة المصدر شائعة
+          distribution: 'temurin'
 
-      # إعداد Python
       - name: إعداد Python 3.9
         uses: actions/setup-python@v5
         with:
           python-version: 3.9
 
-      # تثبيت التبعيات العامة وتبعات Kivy
       - name: تثبيت تبعيات النظام
         run: |
           sudo apt-get update
@@ -60,42 +48,34 @@ jobs:
               gstreamer1.0-plugins-base \
               gstreamer1.0-plugins-good
 
-      # تثبيت Buildozer و Cython باستخدام pip
       - name: تثبيت buildozer و cython
         run: pip install buildozer cython
 
-      # ---- خطوة جديدة لقبول التراخيص ----
-      # تقوم هذه الخطوة بتشغيل 'yes' للإجابة تلقائيًا بـ 'y' على أي طلبات ترخيص
-      # من Android sdkmanager. تستهدف المسارات المتوقعة حيث يقوم buildozer
-      # بتثبيت sdkmanager. تمت إضافة مهلة زمنية كإجراء وقائي.
-      - name: قبول تراخيص SDK
+      - name: تنزيل وتثبيت Android SDK و cmdline-tools
         run: |
-          # تحديد المسار المتوقع لـ Android SDK بناءً على سجل الأخطاء السابق
-          SDK_PATH="/home/runner/.buildozer/android/platform/android-sdk"
-          # التأكد من وجود مجلد التراخيص، وإنشائه إذا لم يكن موجودًا
-          mkdir -p "${SDK_PATH}/licenses" || true
-          # محاولة قبول التراخيص باستخدام sdkmanager في المسارات الشائعة
-          # نستخدم 'yes |' لتمرير 'y' تلقائيًا ونوجه الخرج إلى /dev/null لتجنب الفوضى في السجلات
-          yes | ${SDK_PATH}/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || yes | ${SDK_PATH}/tools/bin/sdkmanager --licenses > /dev/null || echo "لم يتم العثور على sdkmanager في المسارات المتوقعة أو تم قبول التراخيص بالفعل."
-          # حل بديل: محاولة إيجاد sdkmanager في PATH، في حال أضافه buildozer إلى المسار العام
-          yes | sdkmanager --licenses > /dev/null || true
-          echo "تمت محاولة قبول تراخيص SDK."
-        # إضافة مهلة زمنية (بالدقائق) لمنع تعليق سير العمل إذا توقف الأمر لأي سبب
-        timeout-minutes: 5
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          cd $HOME/android-sdk/cmdline-tools
+          curl -o commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip
+          unzip -q commandlinetools.zip
+          mv cmdline-tools latest
+          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      # --------------------------------------
+      - name: تثبيت مكونات SDK المطلوبة
+        run: |
+          yes | sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
+          sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;31.0.0" > /dev/null
 
-      # تشغيل أمر Buildozer لبناء ملف APK الخاص بالـ debug
-      # العلامة '-v' توفر مخرجات مفصلة، مفيدة لتصحيح الأخطاء
+      - name: تعديل buildozer.spec لاستخدام SDK الجديد
+        run: |
+          sed -i '/^# *android.sdk_path =/a android.sdk_path = $HOME/android-sdk' buildozer.spec || true
+
       - name: البناء باستخدام Buildozer
         run: buildozer -v android debug
 
-      # رفع ملف APK المُنشأ كـ "أثر" (artifact) لسير العمل
-      # يمكنك تنزيله لاحقًا من صفحة ملخص التشغيل في GitHub Actions
       - name: رفع ملف APK كأثر
         uses: actions/upload-artifact@v4
         with:
-          # اسم الملف المضغوط الذي سيحتوي على الـ APK
           name: captchaapp-apk
-          # المسار إلى ملف (أو ملفات) APK المُنشأة
           path: bin/*.apk
