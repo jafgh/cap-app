@@ -1,59 +1,68 @@
-name: Build APK with Buildozer
+name: Build Android APK with Buildozer
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  build:
-    name: Build Android APK
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout source code
+      # 1. نسخ الملفات من المستودع
+      - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: 🐍 Setup Python 3.9
+      # 2. إعداد بايثون
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: '3.10'
 
-      - name: 🧪 Install dependencies
+      # 3. تثبيت المتطلبات الأساسية للنظام
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            zip unzip ccache libncurses5 \
+            libstdc++6 libffi-dev libssl-dev \
+            libsqlite3-dev libjpeg-dev \
+            openjdk-17-jdk \
+            python3-pip python3-setuptools \
+            python3-wheel git curl build-essential
+
+      # 4. إعداد Android SDK من GitHub Actions
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+
+      # 5. قبول تراخيص SDK
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses
+
+      # 6. تثبيت buildozer وأدواته
+      - name: Install Buildozer and Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install cython buildozer
+          pip install cython virtualenv
+          pip install buildozer
 
-      - name: 🧹 Clean previous builds
-        run: rm -rf .buildozer bin
-
-      - name: 📥 Install Android SDK Command-line Tools + Accept Licenses
+      # 7. (اختياري) إنشاء ملف buildozer.spec إن لم يكن موجودًا
+      - name: Generate buildozer.spec if missing
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          curl -o tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip
-          unzip tools.zip -d latest
-          rm tools.zip
-        shell: bash
+          if [ ! -f buildozer.spec ]; then
+            buildozer init
+          fi
 
-      - name: ☑️ Set ANDROID_HOME and update SDK
-        run: |
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$HOME/android-sdk/emulator:$PATH" >> $GITHUB_ENV
-        shell: bash
-
-      - name: 📦 Install Build Tools, Platform Tools, Platforms, Accept licenses
-        run: |
-          yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
-          sdkmanager --sdk_root=$HOME/android-sdk \
-            "platform-tools" \
-            "platforms;android-31" \
-            "build-tools;31.0.0" \
-            "ndk;23.1.7779620"
-        shell: bash
-
-      - name: 🏗️ Build with Buildozer
-        env:
-          ANDROIDSDK: $HOME/android-sdk
+      # 8. تثبيت المتطلبات الإضافية من buildozer.spec
+      - name: Build APK using Buildozer
         run: |
           buildozer android debug
+
+      # 9. تحميل ملف APK الناتج
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CaptchaApp-APK
+          path: bin/*.apk
