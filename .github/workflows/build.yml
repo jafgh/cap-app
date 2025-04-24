@@ -1,48 +1,80 @@
-name: Build APK with Buildozer
+name: Build Android APK with Buildozer
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-apk:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      # 1. جلب الكود
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      # 2. إعداد بايثون 3.9
+      - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
+          python-version: '3.9'
 
-      - name: Install dependencies
+      # 3. تثبيت حزم النظام الأساسية
+      - name: Install system dependencies
         run: |
-          sudo apt update
-          sudo apt install -y zip unzip openjdk-17-jdk adb wget python3-pip
-          pip install --upgrade pip
-          pip install buildozer cython
+          sudo apt-get update
+          sudo apt-get install -y \
+            zip unzip ccache libncurses5 \
+            libstdc++6 libffi-dev libssl-dev \
+            libsqlite3-dev libjpeg-dev zlib1g-dev \
+            libfreetype6-dev libgl1-mesa-dev \
+            libgstreamer1.0-dev gstreamer1.0-plugins-base \
+            openjdk-11-jdk git curl build-essential python3-dev python3-pip
 
-      - name: Install Android SDK (Command Line Tools)
+      # 4. تنزيل Android SDK Command-line Tools يدوياً
+      - name: Download Android command-line tools
         run: |
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
-          unzip tools.zip
+          curl -o tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip
+          unzip -q tools.zip
           mv cmdline-tools latest
+          # symlink ليجعل المسار tools/bin موجوداً
+          mkdir -p $HOME/android-sdk/tools
+          ln -s $HOME/android-sdk/cmdline-tools/latest $HOME/android-sdk/tools
+
+      # 5. ضبط متغيّرات البيئة لـ Android SDK
+      - name: Configure Android SDK environment
+        run: |
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/tools/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Accept Licenses
-        run: yes | sdkmanager --licenses
-
-      - name: Install Android SDK Packages
+      # 6. قبول تراخيص SDK وتثبيت المكوّنات المطلوبة
+      - name: Accept SDK licenses & install platforms
         run: |
-          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
+          yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
+          sdkmanager --sdk_root=$HOME/android-sdk \
+            "platform-tools" \
+            "platforms;android-31" \
+            "build-tools;31.0.0"
 
+      # 7. تثبيت Buildozer و Cython
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip
+          pip install cython buildozer
+
+      # 8. بناء الـ APK
       - name: Build APK
         run: |
           buildozer android debug
+
+      # 9. رفع الـ APK كـ artifact
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CaptchaApp-APK
+          path: bin/*.apk
