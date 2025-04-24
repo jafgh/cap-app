@@ -1,36 +1,35 @@
 [app]
-
 # (str) عنوان تطبيقك
 title = CaptchaApp
 
 # (str) اسم الحزمة
 package.name = captchaapp
 
-# (str) نطاق الحزمة (مطلوب لتغليف android/ios)
+# (str) النطاق العكسي (لتوليد الـ package id)
 package.domain = com.yourdomain
 
-# (str) مجلد الكود المصدري حيث يوجد main.py
+# (str) مسار الكود المصدري (حيث يوجد main.py)
 source.dir = .
 
 # (list) امتدادات الملفات التي تريد تضمينها
 source.include_exts = py,kv,ttf,onnx,png,jpg
 
-# (list) الأنماط الإضافية للتضمين
+# (list) أنماط إضافية (لملفّات الأصول)
 source.include_patterns = assets/*
 
 # (str) إصدار التطبيق
 version = 0.1
 
-# (list) متطلبات التطبيق
-requirements = python3,kivy,hostpython3,onnxruntime,opencv-python-headless,numpy,pillow,requests,arabic-reshaper,python-bidi,torch,torchvision
+# (list) المتطلبات (Python packages)
+requirements = python3,kivy,onnxruntime,opencv-python-headless,numpy,pillow,requests,arabic-reshaper,python-bidi,torch,torchvision
 
-# (bool) تفعيل دعم AndroidX (مهم إذا Kivy ≥ 2.0.0)
-android.enable_androidx = True
-
-# (bool) ملء الشاشة
+# (bool) تشغيل على كامل الشاشة؟
 fullscreen = 0
 
-# (list) الاتجاهات المدعومة (اختياري)
+# (bool) دعم AndroidX
+android.enable_androidx = True
+
+# (list) اتجاهات الواجهة
 # orientation = portrait
 
 # ------------------------------------------------------------------
@@ -40,45 +39,31 @@ fullscreen = 0
 # (list) الأذونات
 android.permissions = INTERNET
 
-# (int) واجهة برمجة تطبيقات Android المستهدفة (Target API)
+# (int) Target API level
 android.api = 31
 
-# (int) الحد الأدنى لـ API
+# (int) Minimum API level
 android.minapi = 21
 
-# (str) نسخة NDK
+# (str) NDK version
 android.ndk = 23b
 
-# (str) نسخة Build Tools
+# (str) Build Tools version
 android.build_tools_version = 31.0.0
 
-# (str) نسخة Command-line Tools (لفك مشكلة sdkmanager)
-android.cmdline_tools_version = 9123335
-
-# (list) المعماريات المراد البناء لها
-android.archs = arm64-v8a, armeabi-v7a
+# (list) المعماريات
+android.archs = arm64-v8a,armeabi-v7a
 
 # ------------------------------------------------------------------
-#               ضبط python-for-android branch إلى develop
+#            استخدام develop branch لـ python-for-android
 # ------------------------------------------------------------------
-
-# (str) استخدم فرع develop لـ python-for-android لتوافق أفضل
 p4a.branch = develop
 
-
-# ==================================================================
-#                     قسم [buildozer] العام
-# ==================================================================
+# ------------------------------------------------------------------
+#                إعدادات log و root warnings
+# ------------------------------------------------------------------
 [buildozer]
-
-# (int) مستوى السجل (0=أخطاء فقط،1=معلومات،2=تصحيح)
+# (int) log_level: 0 = errors only, 1 = info, 2 = debug
 log_level = 2
-
-# (int) تحكم في تحذيرات root (-1=لا،0=سطح المكتب فقط،1=الكل)
+# (int) warn_on_root: -1 = no, 0 = warn only, 1 = root warnings
 warn_on_root = 1
-
-# (str) (اختياري) مسارات مخصصة
-# buildozer_dir = .buildozer
-# bin_dir = ./bin
-# cache_dir = %(buildozer_dir)s/cache
-# build_dir = %(buildozer_dir)s/build
