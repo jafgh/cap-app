@@ -31,11 +31,13 @@ jobs:
           distribution: temurin
           java-version: '11'
 
-      - name: Install apt dependencies
+      - name: Install apt dependencies (including git)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            wget unzip git python3-dev build-essential pkg-config \
+            git \
+            wget unzip \
+            python3-dev build-essential pkg-config \
             libgl1-mesa-dev libgles2-mesa-dev \
             libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
             libmtdev-dev libjpeg-dev libfreetype6-dev \
@@ -51,7 +53,6 @@ jobs:
           mv cmdline-tools latest
 
       - name: Install SDK packages & accept licenses
-        # نستخدم sdkmanager كلّغة رئيسية ونقبل الرخص دفعةً واحدة
         run: |
           yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --install \
             "platform-tools" \
