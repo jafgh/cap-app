@@ -12,36 +12,54 @@ import cv2
 import onnxruntime as ort
 import torchvision.transforms as transforms
 
+from bidi.algorithm import get_display
+import arabic_reshaper
+
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.popup import Popup
 from kivy.uix.image import Image
 from kivy.uix.progressbar import ProgressBar
 from kivy.uix.textinput import TextInput
-from kivy.uix.anchorlayout import AnchorLayout
-from kivy.uix.modalview import ModalView
+from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.core.text import LabelBase
 from kivy.core.window import Window
 from kivy.graphics.texture import Texture
 
 # --------------------------------------------------
-# Register Arabic font
+# مسارات الأصول (assets)
 # --------------------------------------------------
-LabelBase.register(name='Arabic', fn_regular='assets/NotoNaskhArabic-Regular.ttf')
+BASE_DIR = os.path.dirname(__file__)
+ASSETS_DIR = os.path.join(BASE_DIR, 'assets')
+ONNX_MODEL_PATH = os.path.join(ASSETS_DIR, 'holako bag.onnx')
+FONT_PATH       = os.path.join(ASSETS_DIR, 'NotoNaskhArabic-Regular.ttf')
 
 # --------------------------------------------------
-# Constants
+# Register Arabic font (supports Arabic shaping)
+# --------------------------------------------------
+LabelBase.register(name='Arabic', fn_regular=FONT_PATH)
+
+# --------------------------------------------------
+# Helper: reshape only Arabic, leave English/digits intact
+# --------------------------------------------------
+def ar(text):
+    if re.search(r'[\u0600-\u06FF]', text):
+        reshaped = arabic_reshaper.reshape(text)
+        return get_display(reshaped)
+    else:
+        return text
+
+# --------------------------------------------------
+# Constants: include digits + lowercase + uppercase English
 # --------------------------------------------------
 CHARSET = '0123456789abcdefghijklmnopqrstuvwxyz'
 CHAR2IDX = {c: i for i, c in enumerate(CHARSET)}
 IDX2CHAR = {i: c for c, i in CHAR2IDX.items()}
 NUM_CLASSES = len(CHARSET)
 NUM_POS = 5
-ONNX_MODEL_PATH = r"holako bag.onnx"
 
 # --------------------------------------------------
 # Preprocessing transform
@@ -65,12 +83,18 @@ class MainWidget(BoxLayout):
         self.current_captcha = None
 
         # Notification Label
-        self.notification = Label(text='', font_name='Arabic', font_size='16sp', size_hint=(1, None), height=30)
+        self.notification = Label(
+            text='', font_name='Arabic', font_size='16sp', size_hint=(1, None), height=30,
+            halign='right', text_size=(Window.width-20, None)
+        )
         self.add_widget(self.notification)
 
         # Add Account Button
-        btn_layout = AnchorLayout(size_hint=(1, None), height=40)
-        btn_add = Button(text='Add Account', size_hint=(None, None), size=(200, 40), on_release=self.on_add_account)
+        btn_layout = BoxLayout(size_hint=(1, None), height=40)
+        btn_add = Button(
+            text=ar('إضافة حساب'), font_name='Arabic', size_hint=(None, None), size=(200, 40),
+            on_release=self.on_add_account
+        )
         btn_layout.add_widget(btn_add)
         self.add_widget(btn_layout)
 
@@ -81,18 +105,25 @@ class MainWidget(BoxLayout):
         self.scroll.add_widget(self.accounts_box)
         self.add_widget(self.scroll)
 
+        # Captcha display area
+        self.captcha_img = Image(size_hint=(1, 0.5))
+        self.add_widget(self.captcha_img)
+
         # Speed Label
-        self.speed_label = Label(text='Preprocess: 0 ms | Predict: 0 ms', font_name='Arabic', font_size='14sp', size_hint=(1, None), height=30)
+        self.speed_label = Label(
+            text=ar('المعالجة: 0 ملليثانية | التنبؤ: 0 ملليثانية'), font_name='Arabic', font_size='14sp',
+            size_hint=(1, None), height=30, halign='right', text_size=(Window.width-20, None)
+        )
         self.add_widget(self.speed_label)
 
         # Load ONNX model
         if not os.path.exists(ONNX_MODEL_PATH):
-            self.show_error(f"ONNX model not found at: {ONNX_MODEL_PATH}")
+            self.show_error(ar(f"ملف النموذج غير موجود في: {ONNX_MODEL_PATH}"))
             return
         try:
             self.session = ort.InferenceSession(ONNX_MODEL_PATH, providers=['CPUExecutionProvider'])
         except Exception as e:
-            self.show_error(f"Failed to load ONNX model: {e}")
+            self.show_error(ar(f"فشل تحميل النموذج: {e}"))
             return
 
     def show_notification(self, msg, color=(1,1,1,1)):
@@ -101,7 +132,11 @@ class MainWidget(BoxLayout):
         print(msg)
 
     def show_error(self, msg):
-        popup = Popup(title='Error', content=Label(text=msg, font_name='Arabic'), size_hint=(0.8, 0.4))
+        popup = Popup(
+            title=ar('خطأ'),
+            content=Label(text=msg, font_name='Arabic', halign='right', text_size=(Window.width*0.7, None)),
+            size_hint=(0.8, 0.4)
+        )
         popup.open()
 
     def generate_user_agent(self):
@@ -132,21 +167,19 @@ class MainWidget(BoxLayout):
 
     def on_add_account(self, instance):
         content = BoxLayout(orientation='vertical', spacing=10, padding=10)
-        user_input = TextInput(hint_text='Username', multiline=False, font_name='Arabic')
-        pwd_input = TextInput(hint_text='Password', multiline=False, password=True, font_name='Arabic')
-        btn_login = Button(text='Login', size_hint=(1, None), height=40)
+        user_input = TextInput(hint_text=ar('اسم المستخدم'), multiline=False, font_name='Arabic')
+        pwd_input = TextInput(hint_text=ar('كلمة المرور'), multiline=False, password=True, font_name='Arabic')
+        btn_login = Button(text=ar('تسجيل الدخول'), size_hint=(1, None), height=40, font_name='Arabic')
         content.add_widget(user_input)
         content.add_widget(pwd_input)
         content.add_widget(btn_login)
-        popup = Popup(title='Add Account', content=content, size_hint=(0.8, 0.5))
+        popup = Popup(title=ar('إضافة حساب'), content=content, size_hint=(0.8, 0.5))
 
         def do_login(btn):
-            user = user_input.text.strip()
-            pwd = pwd_input.text.strip()
-            if not user or not pwd:
-                return
-            popup.dismiss()
-            self.process_login(user, pwd)
+            user, pwd = user_input.text.strip(), pwd_input.text.strip()
+            if user and pwd:
+                popup.dismiss()
+                self.process_login(user, pwd)
 
         btn_login.bind(on_release=do_login)
         popup.open()
@@ -158,12 +191,12 @@ class MainWidget(BoxLayout):
             ok = self.login(user, pwd, session)
             elapsed = time.time() - start
             if ok:
-                Clock.schedule_once(lambda dt: self.show_notification(f"Logged in {user} in {elapsed:.2f}s", (0,1,0,1)))
+                Clock.schedule_once(lambda dt: self.show_notification(ar(f"تم تسجيل الدخول: {user} في {elapsed:.2f} ثانية"), (0,1,0,1)))
                 self.accounts[user] = {'password': pwd, 'session': session}
                 proc = self.fetch_process_ids(session)
                 Clock.schedule_once(lambda dt: self.add_account_ui(user, proc))
             else:
-                Clock.schedule_once(lambda dt: self.show_notification(f"Login failed for {user}", (1,0,0,1)))
+                Clock.schedule_once(lambda dt: self.show_notification(ar("فشل تسجيل الدخول"), (1,0,0,1)))
         threading.Thread(target=login_thread, daemon=True).start()
 
     def login(self, username, password, session, retries=3):
@@ -174,8 +207,7 @@ class MainWidget(BoxLayout):
                 r = session.post(url, json=payload, verify=False)
                 if r.status_code == 200:
                     return True
-                else:
-                    return False
+                return False
             except:
                 return False
         return False
@@ -189,18 +221,18 @@ class MainWidget(BoxLayout):
             if r.status_code == 200:
                 return r.json().get("P_RESULT", [])
         except Exception as e:
-            Clock.schedule_once(lambda dt: self.show_notification(f"Error fetching IDs: {e}", (1,0,0,1)))
+            Clock.schedule_once(lambda dt: self.show_notification(ar(f"خطأ في جلب العمليات: {e}"), (1,0,0,1)))
         return []
 
     def add_account_ui(self, user, processes):
         acc_box = BoxLayout(orientation='vertical', size_hint_y=None, height=len(processes)*60+40, padding=5, spacing=5)
-        acc_box.add_widget(Label(text=f"Account: {user}", font_name='Arabic', size_hint_y=None, height=30))
+        acc_box.add_widget(Label(text=ar(f"الحساب: {user}"), font_name='Arabic', size_hint_y=None, height=30, halign='right', text_size=(Window.width-20, None)))
         for proc in processes:
             pid = proc.get("PROCESS_ID")
-            name = proc.get("ZCENTER_NAME", "Unknown")
-            row = BoxLayout(orientation='horizontal', size_hint_y=None, height=40)
+            name = proc.get("ZCENTER_NAME", "غير معروف")
+            row = BoxLayout(orientation='horizontal', size_hint_y=None, height=40, spacing=5)
+            btn = Button(text=ar(name), size_hint_x=None, width=200, font_name='Arabic')
             prog = ProgressBar(max=1, value=0)
-            btn = Button(text=name, size_hint_x=None, width=200)
             btn.bind(on_release=lambda inst, u=user, p=pid, pb=prog: threading.Thread(target=self.handle_captcha, args=(u, p, pb), daemon=True).start())
             row.add_widget(btn)
             row.add_widget(prog)
@@ -227,10 +259,10 @@ class MainWidget(BoxLayout):
                     if not self.login(user, self.accounts[user]['password'], session):
                         return None
                 else:
-                    Clock.schedule_once(lambda dt: self.show_notification(f"Server error: {r.status_code}", (1,0,0,1)))
+                    Clock.schedule_once(lambda dt: self.show_notification(ar(f"خطأ في الخادم: {r.status_code}"), (1,0,0,1)))
                     return None
         except Exception as e:
-            Clock.schedule_once(lambda dt: self.show_notification(f"Captcha error: {e}", (1,0,0,1)))
+            Clock.schedule_once(lambda dt: self.show_notification(ar(f"خطأ في جلب الكابتشا: {e}"), (1,0,0,1)))
         return None
 
     def predict_captcha(self, pil_img):
@@ -253,7 +285,6 @@ class MainWidget(BoxLayout):
         return pred, pre_ms, pred_ms
 
     def show_captcha(self, b64data, prog):
-        # Decode and process image
         b64 = b64data.split(',')[1] if ',' in b64data else b64data
         raw = base64.b64decode(b64)
         pil = PILImage.open(io.BytesIO(raw))
@@ -274,22 +305,17 @@ class MainWidget(BoxLayout):
         proc_img = PILImage.fromarray(binary)
 
         pred, pre_ms, pred_ms = self.predict_captcha(proc_img)
-        Clock.schedule_once(lambda dt: self.show_notification(f"Predicted CAPTCHA: {pred}", (0,0,1,1)))
-        Clock.schedule_once(lambda dt: setattr(self.speed_label, 'text', f"Preprocess: {pre_ms:.2f} ms | Predict: {pred_ms:.2f} ms"))
+        notification_text = ar("الناتج المتوقع للكابتشا: ") + pred
+        Clock.schedule_once(lambda dt: self.show_notification(notification_text, (0,0,1,1)))
+        self.speed_label.text = ar(f"المعالجة: {pre_ms:.2f} ملليثانية | التنبؤ: {pred_ms:.2f} ملليثانية")
         self.submit_captcha(pred)
 
-        # Display image in popup
-        texture = self.pil_to_texture(proc_img)
-        img_widget = Image(texture=texture, size_hint=(1,1), allow_stretch=True)
-        popup = Popup(title='CAPTCHA', content=img_widget, size_hint=(0.8,0.6))
-        popup.open()
-        # Update progress bar
+        self.captcha_img.texture = self.pil_to_texture(proc_img)
         Clock.schedule_once(lambda dt: prog.setter('value')(prog, 1))
 
     def pil_to_texture(self, pil_img):
         arr = np.array(pil_img)
         h, w = arr.shape
-        # grayscale to rgb
         buf = arr.tobytes()
         texture = Texture.create(size=(w, h), colorfmt='luminance')
         texture.blit_buffer(buf, colorfmt='luminance', bufferfmt='ubyte')
@@ -302,14 +328,15 @@ class MainWidget(BoxLayout):
         try:
             r = session.get(url, verify=False)
             color = (0,1,0,1) if r.status_code == 200 else (1,0,0,1)
-            Clock.schedule_once(lambda dt: self.show_notification(f"Submit response: {r.text}", color))
+            Clock.schedule_once(lambda dt: self.show_notification(ar(f"تم التثبيت: {r.text}"), color))
         except Exception as e:
-            Clock.schedule_once(lambda dt: self.show_notification(f"Submit error: {e}", (1,0,0,1)))
+            Clock.schedule_once(lambda dt: self.show_notification(ar(f"خطأ في الإرسال: {e}"), (1,0,0,1)))
 
 class CaptchaApp(App):
     def build(self):
         Window.clearcolor = (1,1,1,1)
         return MainWidget()
+
 
 if __name__ == '__main__':
     CaptchaApp().run()
