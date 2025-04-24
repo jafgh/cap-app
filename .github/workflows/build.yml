@@ -33,16 +33,18 @@ jobs:
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip
           rm cmdline-tools.zip
-          mv cmdline-tools cmdline-tools-latest
+          # نعيد تسمية المجلد ليكون under 'latest'
+          mv cmdline-tools latest
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
 
       - name: Accept Android licenses
-        run: yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
+        run: |
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
 
       - name: Install Android SDK Platforms & Build-tools
         run: |
-          sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
 
@@ -54,12 +56,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install Python & Buildozer
+      - name: Install Python, Buildozer & requirements
         run: |
           python3 -m pip install --upgrade pip setuptools wheel
           pip install buildozer
           pip install -r requirements.txt
-        shell: bash
 
       - name: Build APK
         working-directory: ${{ github.workspace }}
@@ -67,12 +68,32 @@ jobs:
           ANDROIDSDK: $HOME/android-sdk
           ANDROID_SDK_ROOT: $HOME/android-sdk
           ANDROID_HOME: $HOME/android-sdk
-          PATH: $HOME/android-sdk/cmdline-tools/latest/bin:$HOME/android-sdk/platform-tools:$PATH
+          PATH: |
+            $HOME/android-sdk/cmdline-tools/latest/bin:
+            $HOME/android-sdk/platform-tools:
+            $PATH
         run: |
           buildozer --verbose android debug
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: CaptchaApp-APK
-          path: ./.buildozer/android/platform/build-arm64-v8a/dists/captchaapp/bin/*.apk
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "${GITHUB_TOKEN}" | gh auth login --with-token
+
+      - name: Create Release and upload APK
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${GITHUB_RUN_NUMBER}"
+          APK_PATH=$(find ./.buildozer -type f -name "*.apk" | head -n1)
+          gh release create "$TAG" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "Automated Build #${GITHUB_RUN_NUMBER}" \
+            --notes "APK built on $(date -u +"%Y-%m-%d %H:%M UTC")" \
+            "$APK_PATH"
