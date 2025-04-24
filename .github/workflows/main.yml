@@ -1,114 +1,37 @@
-name: Build Android APK
+name: Android CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+
+    env:
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Java (for Android SDK)
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
+      - name: Create Android SDK directories
+        run: mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
 
-      - name: Install dependencies for sdkmanager
+      - name: Download Android SDK Command Line Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip wget
-
-      - name: Install Android SDK Command Line Tools
-        env:
-          ANDROID_SDK_ROOT: $HOME/android-sdk
-        run: |
-          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           cd $ANDROID_SDK_ROOT/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
           unzip tools.zip -d temp
-          mv temp/cmdline-tools latest
+          mv temp/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
           rm -rf tools.zip temp
 
-      - name: Accept Android SDK Licenses
-        env:
-          ANDROID_SDK_ROOT: $HOME/android-sdk
+      - name: Accept Android SDK licenses
         run: |
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
 
-      - name: Install Android SDK Platforms & Build-tools
-        env:
-          ANDROID_SDK_ROOT: $HOME/android-sdk
+      - name: Install required SDK packages
         run: |
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
-            "platform-tools" \
-            "platforms;android-31" \
-            "build-tools;31.0.0" \
-            "ndk;23.1.7779620"
-
-      - name: Install system packages for Kivy build
-        run: |
-          sudo apt-get install -y \
-            python3-dev build-essential git pkg-config \
-            libgl1-mesa-dev libgles2-mesa-dev \
-            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
-            libmtdev-dev \
-            libjpeg-dev libfreetype6-dev \
-            xclip xsel
-
-      - name: Cache pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install Python, Buildozer & requirements
-        run: |
-          python3 -m pip install --upgrade pip setuptools wheel
-          pip install buildozer
-          pip install -r requirements.txt
-
-      - name: Build APK
-        working-directory: ${{ github.workspace }}
-        env:
-          ANDROIDSDK: $HOME/android-sdk
-          ANDROID_SDK_ROOT: $HOME/android-sdk
-          ANDROID_HOME: $HOME/android-sdk
-          PATH: |
-            $HOME/android-sdk/cmdline-tools/latest/bin:
-            $HOME/android-sdk/platform-tools:
-            $PATH
-        run: |
-          buildozer --verbose android debug
-
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
-
-      - name: Authenticate GitHub CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "${GITHUB_TOKEN}" | gh auth login --with-token
-
-      - name: Create Release and Upload APK
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="build-${GITHUB_RUN_NUMBER}"
-          APK_PATH=$(find ./.buildozer -type f -name "*.apk" | head -n1)
-          gh release create "$TAG" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --title "Build #${GITHUB_RUN_NUMBER}" \
-            --notes "Automated build on $(date -u +"%Y-%m-%d %H:%M UTC")" \
-            "$APK_PATH"
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-34" "build-tools;34.0.0"
