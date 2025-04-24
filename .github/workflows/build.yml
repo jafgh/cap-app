@@ -62,11 +62,11 @@ jobs:
 
       - name: 📥 تنزيل Android SDK + cmdline-tools
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip
-          unzip -q sdk.zip
-          mv cmdline-tools latest
+         mkdir -p $HOME/android-sdk/cmdline-tools
+         cd $HOME/android-sdk/cmdline-tools
+         curl -o sdk.zip https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip
+         unzip -q sdk.zip
+         mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
 
       - name: ➕ إعداد البيئة
         run: |
