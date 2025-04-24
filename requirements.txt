@@ -1,0 +1,10 @@
+kivy==2.1.0
+onnxruntime
+torch
+torchvision
+opencv-python
+numpy
+pillow
+requests
+arabic-reshaper
+python-bidi
