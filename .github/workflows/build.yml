@@ -7,13 +7,13 @@ on:
     branches: [ main, master ]
 
 env:
-  ANDROID_SDK_ROOT: ${{ runner.home }}/android-sdk
-  ANDROID_HOME:    ${{ runner.home }}/android-sdk
-  ANDROID_NDK_HOME: ${{ runner.home }}/android-sdk/ndk/23.1.7779620
+  ANDROID_SDK_ROOT: $HOME/android-sdk
+  ANDROID_HOME:    $HOME/android-sdk
+  ANDROID_NDK_HOME: $HOME/android-sdk/ndk/23.1.7779620
   PATH: |
-    ${{ runner.home }}/android-sdk/cmdline-tools/latest/bin
-    ${{ runner.home }}/android-sdk/platform-tools
-    ${{ runner.home }}/.local/bin
+    $HOME/android-sdk/cmdline-tools/latest/bin
+    $HOME/android-sdk/platform-tools
+    $HOME/.local/bin
     $PATH
 
 jobs:
