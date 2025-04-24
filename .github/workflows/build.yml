@@ -33,7 +33,6 @@ jobs:
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip
           rm cmdline-tools.zip
-          # نعيد تسمية المجلد ليكون under 'latest'
           mv cmdline-tools latest
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
@@ -56,11 +55,15 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install Python, Buildozer & requirements
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.8'
+
+      - name: Install Python & Buildozer
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip setuptools wheel
           pip install buildozer
-          pip install -r requirements.txt
 
       - name: Build APK
         working-directory: ${{ github.workspace }}
