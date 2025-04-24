@@ -31,12 +31,12 @@ jobs:
           distribution: temurin
           java-version: '11'
 
-      - name: Install apt dependencies (including git)
+      - name: Install apt dependencies (including git, tar)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             git \
-            wget unzip \
+            wget unzip tar \
             python3-dev build-essential pkg-config \
             libgl1-mesa-dev libgles2-mesa-dev \
             libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
