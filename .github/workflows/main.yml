@@ -10,7 +10,7 @@ jobs:
     name: Build APK with Buildozer
     runs-on: ubuntu-latest
     env:
-      ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
+      ANDROID_SDK_ROOT: $HOME/Android/Sdk
 
     steps:
     - name: Checkout repository
