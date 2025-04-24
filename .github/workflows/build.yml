@@ -72,7 +72,7 @@ jobs:
           buildozer --verbose android debug
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2
         with:
           name: CaptchaApp-APK
           path: ./.buildozer/android/platform/build-arm64-v8a/dists/captchaapp/bin/*.apk
