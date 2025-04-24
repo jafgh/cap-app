@@ -9,7 +9,7 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout repository
@@ -27,25 +27,42 @@ jobs:
           sudo apt-get install -y unzip wget
 
       - name: Install Android SDK command-line tools
+        env:
+          ANDROID_SDK_ROOT: $HOME/android-sdk
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          cd $ANDROID_SDK_ROOT/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           unzip cmdline-tools.zip
           rm cmdline-tools.zip
-          mv cmdline-tools cmdline-tools-latest
-        env:
-          ANDROID_SDK_ROOT: $HOME/android-sdk
+          mv cmdline-tools latest
 
       - name: Accept Android licenses
-        run: |
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses
-
-      - name: Install Android SDK Platforms & Build-tools
-        run: |
-          sdkmanager --sdk_root=${ANDROID_SDK_ROOT} "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
         env:
           ANDROID_SDK_ROOT: $HOME/android-sdk
+        run: |
+          SDKMANAGER=$(find $HOME/android-sdk -type f -name sdkmanager | head -n1)
+          echo "Using sdkmanager at: $SDKMANAGER"
+          yes | "$SDKMANAGER" --sdk_root="$HOME/android-sdk" --licenses
+
+      - name: Install Android SDK Platforms & Build-tools
+        env:
+          ANDROID_SDK_ROOT: $HOME/android-sdk
+        run: |
+          SDKMANAGER=$(find $HOME/android-sdk -type f -name sdkmanager | head -n1)
+          echo "Using sdkmanager at: $SDKMANAGER"
+          "$SDKMANAGER" --sdk_root="$HOME/android-sdk" "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
+
+      - name: Install system packages for Kivy build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-dev build-essential git pkg-config \
+            libgl1-mesa-dev libgles2-mesa-dev \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libmtdev-dev \
+            libjpeg-dev libfreetype6-dev \
+            xclip xsel
 
       - name: Cache pip
         uses: actions/cache@v3
