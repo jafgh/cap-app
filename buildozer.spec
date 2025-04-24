@@ -1,198 +1,191 @@
 [app]
 
-# (str) Title of your application
+# (str) عنوان تطبيقك
 title = CaptchaApp
 
-# (str) Package name
+# (str) اسم الحزمة
 package.name = captchaapp
 
-# (str) Package domain (needed for android/ios packaging)
+# (str) نطاق الحزمة (مطلوب لتغليف android/ios)
 package.domain = com.yourdomain
 
-# (str) Source code where the main.py live
+# (str) مجلد الكود المصدري حيث يوجد main.py
 source.dir = .
 
-# (list) Source files to include (let buildozer figure it out)
+# (list) ملفات المصدر لتضمينها (دع buildozer يكتشفها)
 # source.include_exts = py,png,jpg,kv,atlas
 source.include_exts = py,kv,ttf,onnx,png,jpg
 
-# (list) List of inclusions using pattern matching
+# (list) قائمة التضمينات باستخدام مطابقة الأنماط
 # source.include_patterns = assets/*,images/*.png
 source.include_patterns = assets/*
 
-# (list) Source files to exclude (let buildozer figure it out)
+# (list) ملفات المصدر لاستبعادها (دع buildozer يكتشفها)
 # source.exclude_exts = spec
 
-# (list) List of directory to exclude (let buildozer figure it out)
+# (list) قائمة المجلدات لاستبعادها (دع buildozer يكتشفها)
 # source.exclude_dirs = tests, bin
 
-# (list) List of exclusions using pattern matching
+# (list) قائمة الاستبعادات باستخدام مطابقة الأنماط
 # source.exclude_patterns = license,images/*/*.jpg
 
-# (str) Application versioning (method 1)
+# (str) إصدار التطبيق (الطريقة 1)
 version = 0.1
 
-# (str) Application versioning (method 2)
+# (str) إصدار التطبيق (الطريقة 2)
 # version.regex = __version__ = ['"](.*)['"]
 # version.filename = %(source.dir)s/main.py
 
-# (list) Application requirements
-# comma separated e.g. requirements = sqlite3,kivy
-# Ensure python3, kivy, and hostpython3 are present for Kivy apps
-# Add your specific dependencies here. Be aware that complex libraries like
-# torch, torchvision, onnxruntime, and opencv might require custom recipes
-# or might not be directly supported by python-for-android out-of-the-box.
-# Start with the core ones and add others incrementally if needed.
+# (list) متطلبات التطبيق
+# مفصولة بفواصل، مثال: requirements = sqlite3,kivy
+# تأكد من وجود python3, kivy, hostpython3 لتطبيقات Kivy.
+# أضف تبعياتك الخاصة هنا. كن على علم بأن المكتبات المعقدة مثل
+# torch, torchvision, onnxruntime, و opencv قد تتطلب وصفات مخصصة (recipes)
+# أو قد لا تكون مدعومة مباشرة بواسطة python-for-android.
+# ابدأ بالأساسيات وأضف الأخرى تدريجيًا إذا لزم الأمر.
 requirements = python3,kivy,hostpython3,onnxruntime,opencv-python-headless,numpy,pillow,requests,arabic-reshaper,python-bidi,torch,torchvision
-# Note: Used opencv-python-headless as it's often easier to build on Android
-# Note: torch and torchvision might be problematic and require advanced setup.
+# ملاحظة: تم استخدام opencv-python-headless لأنه غالبًا ما يكون أسهل في البناء على Android.
+# ملاحظة: قد تكون torch و torchvision إشكالية وتتطلب إعدادًا متقدمًا.
 
-# (str) Custom source folders for requirements
+# (str) مجلدات مصدر مخصصة للمتطلبات
 # requirements.source.kivymd = ../../kivymd
 
-# (str) Presplash background color (used with presplash.png)
+# (str) لون خلفية شاشة البداية (presplash) (يستخدم مع presplash.png)
 # presplash.background_color = #FFFFFF
 
-# (str) Presplash image filename
+# (str) اسم ملف صورة شاشة البداية (presplash)
 # presplash.filename = %(source.dir)s/data/presplash.png
 
-# (str) Icon filename
+# (str) اسم ملف الأيقونة
 # icon.filename = %(source.dir)s/data/icon.png
 
-# (list) Supported orientations
+# (list) الاتجاهات المدعومة
 # orientation = landscape
 # orientation = portrait
 # orientation = all
 
-# (list) List of service to declare
+# (list) قائمة الخدمات للإعلان عنها
 # services = NAME:ENTRYPOINT_TO_PY,NAME2:ENTRYPOINT2_TO_PY
 
-#
-# Android specific options
-#
 
-# (bool) Indicate if the application should be fullscreen or not
+# ==================================================================
+#                         خيارات خاصة بنظام Android
+# ==================================================================
+
+# (bool) تحديد ما إذا كان التطبيق يجب أن يكون بملء الشاشة أم لا
 fullscreen = 0
 
-# (string) Presplash background color (used with presplash.png)
+# (string) لون خلفية شاشة البداية (presplash) (يستخدم مع presplash.png)
 # android.presplash_color = #FFFFFF
 
-# (str) Adaptive icon background hexagon color (e.g. #FFFFFF)
+# (str) لون خلفية الأيقونة التكيفية السداسي (مثال: #FFFFFF)
 # android.adaptive_icon_background = #(hex)
 
-# (str) Adaptive icon foreground file (e.g. assets/icon_fg.png - alpha only)
+# (str) ملف مقدمة الأيقونة التكيفية (مثال: assets/icon_fg.png - ألفا فقط)
 # android.adaptive_icon_foreground = %(source.dir)s/assets/adaptive_icon_fg.png
 
-# (list) Permissions
+# (list) الأذونات المطلوبة
 android.permissions = INTERNET
 
-# (list) features used by the application.
+# (list) الميزات المستخدمة بواسطة التطبيق.
 # android.features = android.hardware.usb.host
 
-# (int) Target Android API, should be aligned with API requirements
+# (int) واجهة برمجة تطبيقات Android المستهدفة (Target API)، يجب أن تتوافق مع متطلبات Google Play
 android.api = 31
 
-# (int) Minimum API required
+# (int) الحد الأدنى المطلوب لواجهة برمجة التطبيقات (Minimum API)
 android.minapi = 21
 
-# (int) Android SDK version to use
+# (int) إصدار Android SDK للاستخدام (عادةً ما يتم تحديده تلقائيًا)
 # android.sdk = 24
 
-# (str) Android NDK version to use
+# (str) إصدار Android NDK للاستخدام
 android.ndk = 23b
 
-# (str) Android NDK directory (if required)
+# (str) مجلد Android NDK (إذا كان مخصصًا وغير موجود في المسار الافتراضي)
 # android.ndk_path =
 
-# (str) Android build tools version (if custom)
+# (str) إصدار أدوات بناء Android (إذا كان مخصصًا)
 android.build_tools_version = 31.0.0
 
-# (str) Android Command line tools version (if custom)
-# android.cmdline_tools_version = 8.0
+# (str) إصدار أدوات سطر أوامر Android (إذا كان مخصصًا)
+# android.cmdline_tools_version = latest
 
-# (str) Specify architectures to build for
+# (str) تحديد المعماريات (architectures) المراد البناء لها
 android.archs = arm64-v8a, armeabi-v7a
 
-# (list) Android library project to add (currently not supported)
+# (list) مشاريع مكتبات Android للإضافة (غير مدعوم حاليًا)
 # android.library_references =
 
-# (list) Android shared libraries to add (usually for recipe overrides)
+# (list) مكتبات Android المشتركة للإضافة (عادةً لتجاوز الوصفات)
 # android.add_libs_arm64_v8a = libs/arm64-v8a/libpango.so
 # android.add_libs_armeabi_v7a = libs/armeabi-v7a/libpango.so
 
-# (bool) Copy libraries to public data folder (RECOMMENDED for new projects)
+# (bool) نسخ المكتبات إلى مجلد البيانات العام (مُوصى به للمشاريع الجديدة)
 # android.copy_libs = 1
 
-# (str) The Android application theme (either "Light" or "Dark")
+# (str) سمة تطبيق Android (إما "Light" أو "Dark")
 # android.manifest.theme = "@android:style/Theme.NoTitleBar"
 
-# (list) Pattern to whitelist for the internal webview
+# (list) نمط القائمة البيضاء لـ webview الداخلي
 # android.whitelist =
 
-# (str) Path to keystore for signing (used only in release mode)
+# (str) مسار إلى مخزن المفاتيح (keystore) للتوقيع (يستخدم فقط في وضع الإصدار release)
 # android.keystore.path =
 
-# (str) Keystore alias (used only in release mode)
+# (str) اسم مستعار لمخزن المفاتيح (keystore alias) (يستخدم فقط في وضع الإصدار release)
 # android.keystore.alias =
 
-# (str) Keystore password (used only in release mode)
+# (str) كلمة مرور مخزن المفاتيح (keystore password) (يستخدم فقط في وضع الإصدار release)
 # android.keystore.password =
 
-# (str) Key password (used only in release mode)
+# (str) كلمة مرور المفتاح (key password) (يستخدم فقط في وضع الإصدار release)
 # android.key.password =
 
-# (bool) Enables AndroidX support. Enable if using Kivy >= 2.0.0
+# (bool) تفعيل دعم AndroidX. يجب تفعيله إذا كنت تستخدم Kivy >= 2.0.0
 android.enable_androidx = True
 
-# (str) Path to Gradle extra build file (.gradle), relative to build dir
+# (str) مسار إلى ملف بناء Gradle الإضافي (.gradle)، نسبي إلى مجلد البناء
 # android.gradle_extra_build_file =
 
-# (str) JVM arguments to pass to Gradle
+# (str) وسيطات JVM لتمريرها إلى Gradle
 # android.gradle_jvm_args = -Xmx2048m
 
-# (list) Gradle dependencies to add
+# (list) تبعيات Gradle للإضافة
 # android.gradle_dependencies =
 
-# (bool) Sign APK using apksigner instead of jarsigner (used for SDK 24+)
+# (bool) توقيع APK باستخدام apksigner بدلاً من jarsigner (يستخدم لـ SDK 24+)
 # android.enable_apksigner = False
 
-# (str) Specify the location of the signing key config file
-# (used only if android.enable_apksigner is enabled)
+# (str) تحديد موقع ملف تكوين مفتاح التوقيع
+# (يستخدم فقط إذا تم تفعيل android.enable_apksigner)
 # android.apksigner_args_path = %(source.dir)s/apksigner.json
 
+# (str) فرع python-for-android المخصص للاستخدام، الافتراضي هو "master"
+# استخدام فرع 'develop' غالبًا ما يحل مشاكل التوافق مع أدوات SDK الحديثة
+p4a.branch = develop
 
-#
-# Buildozer specific options
-#
 
-# (str) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+# ==================================================================
+#                         خيارات خاصة بـ Buildozer
+# ==================================================================
+
+# (str) مستوى السجل (0 = أخطاء فقط، 1 = معلومات، 2 = تصحيح (مع إخراج الأوامر))
 log_level = 2
 
-# (int) Display warning messages (-1 = no, 0 = desktop only, 1 = all)
+# (int) عرض رسائل التحذير (-1 = لا، 0 = سطح المكتب فقط، 1 = الكل)
 warn_on_root = 1
 
-# (str) Buildozer cache directory
+# يمكنك إلغاء التعليق وتعيين هذه إذا لزم الأمر، ولكن الافتراضيات عادة ما تكون جيدة
 # buildozer_dir = .buildozer
-
-# (str) The default download cache location
-# download_cache = %(buildozer_dir)s/cache
-
-# (str) The platform specific build directory
-# build_dir = %(buildozer_dir)s/android/platform
-
-# (str) The python-for-android directory
-# p4a.source_dir = %(buildozer_dir)s/android/p4a
-
-# (str) The python-for-android build directory
-# p4a.build_dir = %(buildozer_dir)s/android/p4a_build
-
-# (str) Custom python-for-android branch to use, defaults to "master"
-# p4a.branch = develop
+# bin_dir = ./bin
+# cache_dir = %(buildozer_dir)s/cache
+# build_dir = %(buildozer_dir)s/build
 
 
-#
-# iOS specific options (not relevant here but included for completeness)
-#
+# ==================================================================
+#                         خيارات خاصة بـ iOS (غير ذات صلة هنا ولكن مدرجة للاكتمال)
+# ==================================================================
 
 # (str) Path to Kivy-iOS project
 # ios.kivy_ios_dir = ../kivy-ios
@@ -206,14 +199,18 @@ warn_on_root = 1
 # ios.ios_deploy_dir = ~/.ios-deploy
 
 
+# ==================================================================
+#                         قسم [buildozer] العام
+# ==================================================================
 [buildozer]
-# (int) Log level (0 = error only, 1 = info, 2 = debug (with command output))
+
+# (int) مستوى السجل (0 = أخطاء فقط، 1 = معلومات، 2 = تصحيح (مع إخراج الأوامر))
 log_level = 2
 
-# (int) Display warning messages (-1 = no, 0 = desktop only, 1 = all)
+# (int) عرض رسائل التحذير (-1 = لا، 0 = سطح المكتب فقط، 1 = الكل)
 warn_on_root = 1
 
-# You can uncomment and set these if needed, but defaults are usually fine
+# يمكنك إلغاء التعليق وتعيين هذه إذا كنت بحاجة إلى مسارات مخصصة
 # buildozer_dir = .buildozer
 # bin_dir = ./bin
 # cache_dir = %(buildozer_dir)s/cache
