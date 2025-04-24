@@ -31,7 +31,7 @@ from kivy.graphics.texture import Texture
 # --------------------------------------------------
 # Register Arabic font
 # --------------------------------------------------
-LabelBase.register(name='Arabic', fn_regular='NotoNaskhArabic-Regular.ttf')
+LabelBase.register(name='Arabic', fn_regular='assets/NotoNaskhArabic-Regular.ttf')
 
 # --------------------------------------------------
 # Constants
