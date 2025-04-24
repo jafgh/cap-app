@@ -1,90 +1,48 @@
-name: بناء تطبيق Android
+name: Build APK with Buildozer
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🔄 سحب الكود
-        uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - name: 🧰 إعداد JDK 11
-        uses: actions/setup-java@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          java-version: '11'
-          distribution: 'temurin'
+          python-version: 3.10
 
-      - name: 🐍 إعداد Python 3.9
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - name: 📦 تثبيت تبعيات النظام
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential git zip unzip pkg-config \
-            libffi-dev libssl-dev liblzma-dev \
-            libjpeg-dev zlib1g-dev libfreetype6-dev \
-            libgstreamer1.0-dev gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good libsdl2-dev \
-            libsdl2-image-dev libsdl2-mixer-dev \
-            libsdl2-ttf-dev libmtdev-dev \
-            libgl1-mesa-dev libgles2-mesa-dev \
-            libgtk-3-dev libpcap-dev python3-dev python3-pip \
-            openjdk-11-jdk
+          sudo apt update
+          sudo apt install -y zip unzip openjdk-17-jdk adb wget python3-pip
+          pip install --upgrade pip
+          pip install buildozer cython
 
-      - name: 📦 تثبيت Buildozer وأدوات Python
+      - name: Install Android SDK (Command Line Tools)
         run: |
-          python -m pip install --upgrade pip
-          pip install cython buildozer
-
-      - name: 📥 تنزيل Android SDK + cmdline-tools
-        run: |
-          # إنشاء مجلّد SDK وأدوات السطر الأوامر
           mkdir -p $HOME/android-sdk/cmdline-tools
           cd $HOME/android-sdk/cmdline-tools
-          
-          # تنزيل وفكّ أرشيف cmdline-tools
-          curl -o sdk.zip \
-            https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip
-          unzip -q sdk.zip
-          
-          # نقل مجلّد cmdline-tools إلى latest
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O tools.zip
+          unzip tools.zip
           mv cmdline-tools latest
-          
-          # ⚙️ إنشاء symlink للمجلّد legacy tools
-          mkdir -p $HOME/android-sdk/tools
-          ln -s $HOME/android-sdk/cmdline-tools/latest $HOME/android-sdk/tools
-
-      - name: ➕ إعداد متغيّرات البيئة
-        run: |
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          # إضافة مسار cmdline-tools و platform-tools إلى PATH
-          echo "$HOME/android-sdk/tools/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: 📥 تثبيت مكونات SDK المطلوبة
+      - name: Accept Licenses
+        run: yes | sdkmanager --licenses
+
+      - name: Install Android SDK Packages
         run: |
-          yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
-          sdkmanager --sdk_root=$HOME/android-sdk \
-            "platform-tools" \
-            "platforms;android-31" \
-            "build-tools;31.0.0"
+          sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0" "ndk;23.1.7779620"
 
-      # لم نعد بحاجة لتعديل buildozer.spec يدوياً،
-      # Buildozer سيقرأ تلقائياً ANDROID_SDK_ROOT.
-
-      - name: 🧪 بناء التطبيق
-        run: buildozer -v android debug
-
-      - name: ⬆️ رفع ملف APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: captchaapp-apk
-          path: bin/*.apk
+      - name: Build APK
+        run: |
+          buildozer android debug
