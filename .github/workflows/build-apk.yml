@@ -121,13 +121,15 @@ jobs:
         echo "sdkmanager found."
 
     # --- NEW: Install Android SDK Platforms, Build-Tools, and NDK ---
-    - name: Install Android SDK components and NDK
-      env:
-        # --- IMPORTANT: Adjust these versions based on your buildozer.spec ---
-        ANDROID_PLATFORM_VERSION: "34"        # Match 'android.api' in buildozer.spec
-        ANDROID_BUILD_TOOLS_VERSION: "34.0.0" # Match 'android.build_tools_version' or use a recent one
-        ANDROID_NDK_VERSION: "25.2.9519653"   # Match 'android.ndk_version' or a compatible one (check Buildozer docs)
-      run: |
+- name: Install Android SDK components and NDK
+    env:
+      ANDROID_PLATFORM_VERSION: "34"        # Match 'android.api' in buildozer.spec
+      ANDROID_BUILD_TOOLS_VERSION: "36.0.0" # <-- CHANGE THIS to match spec
+      ANDROID_NDK_VERSION: "25.2.9519653"   # Match 'android.ndk_version'
+    run: |
+      # ... rest of the run command ...
+      sdkmanager "platform-tools" "platforms;android-${ANDROID_PLATFORM_VERSION}" "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" "ndk;${ANDROID_NDK_VERSION}"
+      # ... rest of the run command ...
         echo "Installing Android SDK platform-tools, platforms, build-tools, and NDK..."
         echo "Using ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
         echo "Listing available packages (optional)..."
