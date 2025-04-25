@@ -1,80 +1,82 @@
-name: Build Android APK with Buildozer
+name: Build & Release APK
 
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build-apk:
+  build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_API: 31
+      ANDROID_BUILD_TOOLS: 31.0.0
+      ANDROID_NDK_VERSION: 23b
+      ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
 
     steps:
-      # 1. جلب الكود
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. إعداد بايثون 3.9
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+      - name: Cache pip
+        uses: actions/cache@v3
         with:
-          python-version: '3.9'
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('buildozer.spec') }}
 
-      # 3. تثبيت حزم النظام الأساسية
+      - name: Cache Android SDK
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools
+            ${{ env.ANDROID_SDK_ROOT }}/platforms
+            ${{ env.ANDROID_SDK_ROOT }}/build-tools
+          key: ${{ runner.os }}-android-sdk-${{ env.ANDROID_API }}-${{ env.ANDROID_BUILD_TOOLS }}-${{ env.ANDROID_NDK_VERSION }}
+
+      - name: Set up Java (for Android SDK tools)
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '11'
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            zip unzip ccache libncurses5 \
-            libstdc++6 libffi-dev libssl-dev \
-            libsqlite3-dev libjpeg-dev zlib1g-dev \
-            libfreetype6-dev libgl1-mesa-dev \
-            libgstreamer1.0-dev gstreamer1.0-plugins-base \
-            openjdk-11-jdk git curl build-essential python3-dev python3-pip
+            python3-pip python3-setuptools \
+            git unzip zip openjdk-11-jdk \
+            libgl1-mesa-dev libgles2-mesa \
+            libopencv-dev
 
-      # 4. تنزيل Android SDK Command-line Tools يدوياً
-      - name: Download Android command-line tools
+      - name: Install Buildozer & python-for-android
         run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          cd $HOME/android-sdk/cmdline-tools
-          curl -o tools.zip https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip
-          unzip -q tools.zip
-          mv cmdline-tools latest
-          # symlink ليجعل المسار tools/bin موجوداً
-          mkdir -p $HOME/android-sdk/tools
-          ln -s $HOME/android-sdk/cmdline-tools/latest $HOME/android-sdk/tools
+          python3 -m pip install --upgrade pip
+          pip install --upgrade buildozer Cython
+          pip install git+https://github.com/kivy/python-for-android.git@develop
 
-      # 5. ضبط متغيّرات البيئة لـ Android SDK
-      - name: Configure Android SDK environment
+      - name: Install Android SDK & NDK
         run: |
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/tools/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-      # 6. قبول تراخيص SDK وتثبيت المكوّنات المطلوبة
-      - name: Accept SDK licenses & install platforms
-        run: |
-          yes | sdkmanager --sdk_root=$HOME/android-sdk --licenses
-          sdkmanager --sdk_root=$HOME/android-sdk \
+          mkdir -p $ANDROID_SDK_ROOT
+          cd $ANDROID_SDK_ROOT
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip
+          mkdir -p cmdline-tools/latest
+          mv tools/* cmdline-tools/latest/
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
             "platform-tools" \
-            "platforms;android-31" \
-            "build-tools;31.0.0"
+            "platforms;android-${ANDROID_API}" \
+            "build-tools;${ANDROID_BUILD_TOOLS}" \
+            "ndk;${ANDROID_NDK_VERSION}"
 
-      # 7. تثبيت Buildozer و Cython
-      - name: Install Buildozer
+      - name: Build APK (debug)
         run: |
-          python -m pip install --upgrade pip
-          pip install cython buildozer
+          buildozer -v android debug
+        working-directory: .
 
-      # 8. بناء الـ APK
-      - name: Build APK
-        run: |
-          buildozer android debug
-
-      # 9. رفع الـ APK كـ artifact
       - name: Upload APK artifact
         uses: actions/upload-artifact@v3
         with:
-          name: CaptchaApp-APK
+          name: CaptchaApp-debug-apk
           path: bin/*.apk
