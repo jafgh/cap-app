@@ -1,8 +1,5 @@
 name: Build Kivy APK
 
-# Controls when the action will run.
-# Triggers the workflow on push events but only for the main branch
-# Also allows manual triggering from the Actions tab
 on:
   push:
     branches: [ main, master ] # Adjust branch name if needed
@@ -13,15 +10,15 @@ jobs:
     runs-on: ubuntu-latest # Use the latest Ubuntu runner
 
     steps:
-    - name: Checkout repository # Checks-out your repository under $GITHUB_WORKSPACE
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python # Sets up Python environment
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9' # Choose a Python version (e.g., 3.9 or 3.10)
+        python-version: '3.9' # Using Python 3.9
 
-    - name: Cache Buildozer global directory # Cache dependencies to speed up builds
+    - name: Cache Buildozer global directory
       uses: actions/cache@v3
       with:
         path: ~/.buildozer
@@ -29,7 +26,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildozer-
 
-    - name: Install dependencies # Install system dependencies needed by buildozer/p4a
+    - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
@@ -51,20 +48,25 @@ jobs:
           libgstreamer-plugins-base1.0-dev \
           libgl1-mesa-dev \
           libgles2-mesa-dev \
-          openjdk-17-jdk # Ensure JDK is installed (adjust version if needed)
+          openjdk-17-jdk # Ensure JDK 17 is installed
 
-    - name: Install buildozer and cython # Install buildozer and required Cython
+    - name: Install/Upgrade buildozer and cython
       run: |
         pip install --upgrade pip setuptools wheel
         pip install cython # Often required
-        pip install buildozer
+        pip install --upgrade buildozer # Ensure latest buildozer is used
 
-    - name: Build APK with Buildozer # Run buildozer to create the debug APK
+    - name: Clean previous build artifacts # ADDED CLEAN STEP
       run: |
-        buildozer android debug # Use 'release' for a release build (requires signing setup)
+        echo "Running buildozer clean..."
+        buildozer clean || echo "Clean failed or directory didn't exist, continuing..." # Run clean, continue even if it fails (e.g., first run)
 
-    - name: Upload APK artifact # Upload the generated APK file as an artifact
+    - name: Build APK with Buildozer
+      run: |
+        buildozer -v android debug # Use -v for verbose output, helpful for debugging
+
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: captcha-app-apk # Name of the artifact zip file
+        name: captcha-app-apk
         path: bin/*.apk # Path to the generated APK file(s)
