@@ -56,11 +56,8 @@ android.minapi = 24
 # (int) Android API level target - Android 14
 android.api = 34
 
-# (str) Android SDK version to use (corresponding to API 34)
-android.sdk = 34
-
 # (str) Android Build Tools version to use (a stable version for SDK 34)
-android.build_tools = 34.0.0
+android.build_tools = 36.0.0
 
 # (str) Android NDK version to use (e.g., 25c or 26c are common recent choices)
 android.ndk = 26c
