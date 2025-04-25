@@ -76,7 +76,7 @@ jobs:
 
       - name: Upload APK artifact
         # استخدم إصدار v2 المستقر
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v5
         with:
           name: CaptchaApp-debug-apk
           path: bin/*.apk
