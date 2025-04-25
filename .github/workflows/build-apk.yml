@@ -169,13 +169,24 @@ jobs:
 
     - name: Link Android SDK root for Buildozer
       run: |
-        rm -rf ~/.buildozer/android/platform/android-sdk
-        ln -s "${{ github.workspace }}/android-sdk" ~/.buildozer/android/platform/android-sdk
+        # تأكد من وجود المجلد الأب قبل الربط
+        mkdir -p $HOME/.buildozer/android/platform
+        # احذف الرابط القديم إن وُجد ثم اربط مجلد SDK المثبت عبر sdkmanager
+        rm -rf $HOME/.buildozer/android/platform/android-sdk
+        ln -s "${{ github.workspace }}/android-sdk" $HOME/.buildozer/android/platform/android-sdk
 
     - name: Link sdkmanager for Buildozer expected path
       run: |
-        mkdir -p ~/.buildozer/android/platform/android-sdk/tools
-        ln -sf "${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin" ~/.buildozer/android/platform/android-sdk/tools/bin
+        # تأكد من وجود مجلد tools/bin ثم اربط sdkmanager
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
+        rm -f $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+        ln -s "${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin/sdkmanager" $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+
+    - name: Accept Android SDK Licenses for Buildozer
+      run: |
+        # قبول جميع التراخيص قبل تثبيت build-tools
+        yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses
+
 
     - name: Accept Android SDK Licenses for Buildozer
       run: |
