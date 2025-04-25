@@ -56,26 +56,69 @@ jobs:
         sudo rm -rf /var/lib/apt/lists/*
 
     # --- NEW: Install Android SDK Command-line Tools ---
+# --- REVISED: Install Android SDK Command-line Tools ---
     - name: Install Android SDK Command-line Tools
       env:
-        # Choose the command line tools version (check official Android site for latest if needed)
-        CMDLINE_TOOLS_VERSION: "11076708" # Example version, update if necessary
-        # Define where to install the SDK
+        CMDLINE_TOOLS_VERSION: "11076708" # Use a known recent version or check Android Studio site
         ANDROID_SDK_ROOT: "${{ github.workspace }}/android-sdk"
       run: |
-        echo "Downloading Android SDK command-line tools..."
-        mkdir -p $ANDROID_SDK_ROOT
+        echo "Downloading Android SDK command-line tools version ${CMDLINE_TOOLS_VERSION}..."
+        mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools"
         wget -q "https://dl.google.com/android/repository/commandlinetools-linux-${CMDLINE_TOOLS_VERSION}_latest.zip" -O cmdline-tools.zip
-        unzip -q cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
-        # The tools initially land in cmdline-tools/cmdline-tools, we need to move them up
-        mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/latest
-        mv $ANDROID_SDK_ROOT/latest $ANDROID_SDK_ROOT/cmdline-tools # Correct structure
+
+        echo "Unzipping tools..."
+        unzip -q cmdline-tools.zip -d "${ANDROID_SDK_ROOT}/cmdline-tools"
+        # The zip usually contains a 'cmdline-tools' directory inside. We need to move its contents
+        # into 'cmdline-tools/latest' to match the expected structure for sdkmanager.
+        # Check if the nested directory exists before moving
+        if [ -d "${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools" ]; then
+          echo "Moving nested cmdline-tools contents to cmdline-tools/latest..."
+          # Create the 'latest' directory
+          mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
+          # Move everything from the nested directory to 'latest'
+          mv "${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools/"* "${ANDROID_SDK_ROOT}/cmdline-tools/latest/"
+          # Remove the now empty nested directory
+          rm -rf "${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools"
+        else
+          echo "WARN: Expected nested 'cmdline-tools' directory not found after unzip. Structure might be different."
+          # Attempt to handle case where it unzips directly (less common now)
+          # Assuming 'bin', 'lib' etc. are directly under $ANDROID_SDK_ROOT/cmdline-tools
+          if [ -d "${ANDROID_SDK_ROOT}/cmdline-tools/bin" ]; then
+             echo "Assuming direct unzip structure. Moving contents to 'latest'."
+             # Create 'latest' and move existing top-level items into it
+             mkdir -p "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
+             # Find all files/dirs directly under cmdline-tools (excluding 'latest' itself) and move them
+             find "${ANDROID_SDK_ROOT}/cmdline-tools" -maxdepth 1 -mindepth 1 ! -name 'latest' -exec mv -t "${ANDROID_SDK_ROOT}/cmdline-tools/latest/" {} +
+          else
+            echo "ERROR: Could not determine command-line tools structure after unzip."
+            exit 1
+          fi
+        fi
+
         rm cmdline-tools.zip
-        # Add SDK paths to environment for subsequent steps
+
+        # Define the standard paths
+        CMDLINE_TOOLS_PATH="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin"
+        PLATFORM_TOOLS_PATH="${ANDROID_SDK_ROOT}/platform-tools"
+
+        echo "Adding SDK paths to environment..."
         echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}" >> $GITHUB_ENV
-        echo "PATH=${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/bin:${ANDROID_SDK_ROOT}/platform-tools" >> $GITHUB_ENV
-        echo "Android SDK installed at ${ANDROID_SDK_ROOT}"
-        ls -l $ANDROID_SDK_ROOT/cmdline-tools/bin # Verify sdkmanager exists
+        # Add the correct paths to the system PATH for subsequent steps
+        echo "PATH=${PATH}:${CMDLINE_TOOLS_PATH}:${PLATFORM_TOOLS_PATH}" >> $GITHUB_ENV
+
+        echo "Android SDK Root: ${ANDROID_SDK_ROOT}"
+        echo "Updated PATH: ${PATH}:${CMDLINE_TOOLS_PATH}:${PLATFORM_TOOLS_PATH}"
+
+        echo "Verifying sdkmanager installation..."
+        # Verify the sdkmanager exists at the expected 'latest' path
+        ls -l "${CMDLINE_TOOLS_PATH}/sdkmanager"
+        if [ $? -ne 0 ]; then
+          echo "ERROR: sdkmanager not found at ${CMDLINE_TOOLS_PATH}/sdkmanager"
+          echo "Listing contents of ${ANDROID_SDK_ROOT}/cmdline-tools/latest:"
+          ls -lR "${ANDROID_SDK_ROOT}/cmdline-tools/latest"
+          exit 1
+        fi
+        echo "sdkmanager found."
 
     # --- NEW: Install Android SDK Platforms, Build-Tools, and NDK ---
     - name: Install Android SDK components and NDK
