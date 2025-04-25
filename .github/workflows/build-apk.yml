@@ -40,12 +40,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildozer-
 
-    - name: Accept Android SDK Licenses for Buildozer
-      run: |
-        # Accept all licenses for the SDK root used by Buildozer
-        yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses
-
-
     # Install essential system dependencies required by Buildozer and Android SDK/NDK
     - name: Install system dependencies and JDK
       run: |
@@ -173,12 +167,19 @@ jobs:
         # Check if aidl tool exists in the installed build-tools directory
         ls -l $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/aidl || echo "ERROR: aidl not found in build-tools directory!"
 
-    # Link sdkmanager for Buildozer expected path
-    - name: Link sdkmanager for Buildozer
+    - name: Link Android SDK root for Buildozer
       run: |
-        # Ensure Buildozer finds sdkmanager under tools/bin
-        mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
-        ln -sf "${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin/sdkmanager" ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+        rm -rf ~/.buildozer/android/platform/android-sdk
+        ln -s "${{ github.workspace }}/android-sdk" ~/.buildozer/android/platform/android-sdk
+
+    - name: Link sdkmanager for Buildozer expected path
+      run: |
+        mkdir -p ~/.buildozer/android/platform/android-sdk/tools
+        ln -sf "${{ github.workspace }}/android-sdk/cmdline-tools/latest/bin" ~/.buildozer/android/platform/android-sdk/tools/bin
+
+    - name: Accept Android SDK Licenses for Buildozer
+      run: |
+        yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses
 
     # Install Python dependencies: Buildozer and Cython
     - name: Install/Upgrade buildozer and cython
