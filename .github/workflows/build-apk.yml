@@ -167,7 +167,7 @@ jobs:
         # Check if aidl tool exists in the installed build-tools directory
         ls -l $ANDROID_SDK_ROOT/build-tools/${ANDROID_BUILD_TOOLS_VERSION}/aidl || echo "ERROR: aidl not found in build-tools directory!"
 
-    # Link sdkmanager into the path that Buildozer expects
+    # Link sdkmanager for Buildozer to expected path
     - name: Link sdkmanager for Buildozer
       run: |
         mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
