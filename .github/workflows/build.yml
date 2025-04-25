@@ -32,7 +32,6 @@ jobs:
             ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools
             ${{ env.ANDROID_SDK_ROOT }}/platforms
             ${{ env.ANDROID_SDK_ROOT }}/build-tools
-          # استخدم قيماً ثابتة في المفتاح لتجنب مشكلات السياق
           key: ${{ runner.os }}-android-sdk-31-31.0.0-23b
 
       - name: Set up Java (for Android SDK tools)
@@ -76,7 +75,8 @@ jobs:
         working-directory: .
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+        # استخدم إصدار v2 المستقر
+        uses: actions/upload-artifact@v2
         with:
           name: CaptchaApp-debug-apk
           path: bin/*.apk
