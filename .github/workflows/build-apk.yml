@@ -40,6 +40,12 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildozer-
 
+    - name: Accept Android SDK Licenses for Buildozer
+      run: |
+        # Accept all licenses for the SDK root used by Buildozer
+        yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk --licenses
+
+
     # Install essential system dependencies required by Buildozer and Android SDK/NDK
     - name: Install system dependencies and JDK
       run: |
