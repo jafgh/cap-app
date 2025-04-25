@@ -178,6 +178,9 @@ jobs:
         # Link the SDK and NDK installed via sdkmanager
         ln -s "${{ github.workspace }}/android-sdk" ~/.buildozer/android/platform/android-sdk
         ln -s "${{ github.workspace }}/android-sdk/ndk/${ANDROID_NDK_VERSION}" ~/.buildozer/android/platform/android-ndk
+        # Link cmdline-tools/latest as tools for sdkmanager path
+        mkdir -p ~/.buildozer/android/platform/android-sdk/tools
+        ln -s "${{ github.workspace }}/android-sdk/cmdline-tools/latest" ~/.buildozer/android/platform/android-sdk/tools
 
     # Install Python dependencies: Buildozer and Cython
     - name: Install/Upgrade buildozer and cython
