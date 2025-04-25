@@ -34,7 +34,7 @@ from kivy.graphics.texture import Texture
 # --------------------------------------------------
 BASE_DIR = os.path.dirname(__file__)
 ASSETS_DIR = os.path.join(BASE_DIR, 'assets')
-ONNX_MODEL_PATH = os.path.join(ASSETS_DIR, 'holako bag.onnx')
+ONNX_MODEL_PATH = os.path.join(ASSETS_DIR, 'holako-bag.onnx')
 FONT_PATH       = os.path.join(ASSETS_DIR, 'NotoNaskhArabic-Regular.ttf')
 
 # --------------------------------------------------
