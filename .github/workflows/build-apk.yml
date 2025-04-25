@@ -39,7 +39,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y --no-install-recommends \
-          git \  
+          git \
           zip \
           unzip \
           build-essential \
@@ -99,6 +99,11 @@ jobs:
           "platforms;android-${ANDROID_PLATFORM_VERSION}" \
           "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" \
           "ndk;${ANDROID_NDK_VERSION}"
+
+    - name: Link Android SDK for Buildozer
+      run: |
+        mkdir -p ~/.buildozer/android/platform
+        ln -sf $ANDROID_SDK_ROOT ~/.buildozer/android/platform/android-sdk
 
     - name: Install/Upgrade buildozer and cython
       run: |
