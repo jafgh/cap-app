@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:onnxruntime_flutter/onnxruntime_flutter.dart';
 import 'package:image/image.dart' as img;
-import 'package:arabic/arabic.dart'; // for reshaping and bidi
+import 'package:arabic_utils/arabic_utils.dart'; // for reshaping and bidi
 
 void main() {
   runApp(const CaptchaApp());
@@ -108,7 +108,7 @@ class _MainPageState extends State<MainPage> {
     // التأكد من أن الواجهة لا تزال موجودة قبل تحديث الحالة
     if (mounted) {
        setState(() {
-        _notification = ArabicHelper.reshape(msg);
+        _notification = reshape(msg);
       });
     }
     // يمكنك إضافة SnackBar لعرض الإشعار بشكل أفضل
@@ -120,7 +120,7 @@ class _MainPageState extends State<MainPage> {
 
   // Helper function for Arabic text reshaping and Bidi
   String _arabic(String text) {
-    return ArabicHelper.reshape(text);
+    return reshape(text);
   }
 
   String _generateUserAgent() {
