@@ -1,51 +1,34 @@
-name: captcha_solver_app # يمكنك تغيير اسم التطبيق
-description: تطبيق Flutter لحل اختبارات CAPTCHA باستخدام نموذج ONNX معد مسبقًا والتفاعل مع API محدد.
-publish_to: 'none' # ضروري لمنع النشر العرضي للمكتبات العامة
-
+name: captcha_solver_app
+description: A Flutter app to solve ECSCS captcha using ONNX.
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  # تحديد إصدارات Dart SDK المتوافقة، تأكد من توافقها مع إصدار Flutter لديك
-  sdk: '>=3.2.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.0
-  onnxruntime_flutter: ^1.17.0
-  image: ^4.1.7
-  arabic_utils: ^2.1.0 # <--- استخدم اسم الحزمة الصحيح وإصدار مستقر
-  cupertino_icons: ^1.0.6
-  # أيقونات Cupertino (تُضاف غالباً افتراضياً مع المشاريع الجديدة)
-  cupertino_icons: ^1.0.6
+  http: ^1.1.0
+  provider: ^6.0.5
+  image: ^4.0.17
+  path_provider: ^2.0.15
+  flutter_dialogs: ^3.0.0
+  convert: ^3.1.1
+  cupertino_icons: ^1.0.2
+  
+  # ONNX Runtime
+  onnxruntime_flutter: ^1.11.1
+  
+  # OpenCV (تتطلب إعدادًا إضافيًا للنظام)
+  opencv: ^4.7.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_lints: ^2.0.0
 
-  # يُنصح به بشدة لتحسين جودة الكود واتباع الممارسات الجيدة
-  flutter_lints: ^3.0.0
-
-# إعدادات خاصة بـ Flutter
 flutter:
   uses-material-design: true
-
-  # تعريف مجلدات الأصول (Assets) التي سيتم تضمينها في التطبيق
   assets:
-    - assets/ # <-- تضمين كل الملفات داخل مجلد assets (بما فيها النموذج)
-    - assets/fonts/ # <-- تضمين كل الملفات داخل مجلد assets/fonts (لضمان تحميل الخط)
-    # يمكنك تحديد الملفات بدقة إذا أردت:
-    # - assets/holako-bag.onnx
-    # - assets/fonts/NotoNaskhArabic-Regular.ttf
-
-  # تعريف الخطوط المخصصة المستخدمة في التطبيق
-  fonts:
-    - family: NotoNaskhArabic # <-- اسم العائلة المستخدم في ThemeData
-      fonts:
-        # يجب أن يتطابق مسار الملف (asset) مع مكان وجود الملف الفعلي
-        - asset: assets/fonts/NotoNaskhArabic-Regular.ttf
-        # يمكنك إضافة أوزان أخرى إذا كانت متوفرة ومستخدمة:
-        # - asset: assets/fonts/NotoNaskhArabic-Bold.ttf
-        #   weight: 700
-        # - asset: assets/fonts/NotoNaskhArabic-Light.ttf
-        #   weight: 300
+    - assets/models/holako_bag.onnx
