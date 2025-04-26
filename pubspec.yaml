@@ -11,13 +11,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # الاعتماديات الأساسية من الكود:
-  http: ^1.2.0 # مكتبة لإجراء طلبات HTTP (استخدم أحدث إصدار مستقر)
-  onnxruntime_flutter: ^1.17.0 # مكتبة تشغيل نماذج ONNX (استخدم أحدث إصدار مستقر)
-  image: ^4.1.7 # مكتبة لمعالجة الصور (استخدم أحدث إصدار مستقر)
-  arabic: ^1.1.4 # مكتبة لمعالجة النصوص العربية (Bidi, Reshape)
-
+  http: ^1.2.0
+  onnxruntime_flutter: ^1.17.0
+  image: ^4.1.7
+  arabic_utils: ^2.1.0 # <--- استخدم اسم الحزمة الصحيح وإصدار مستقر
+  cupertino_icons: ^1.0.6
   # أيقونات Cupertino (تُضاف غالباً افتراضياً مع المشاريع الجديدة)
   cupertino_icons: ^1.0.6
 
