@@ -6,7 +6,53 @@ on:
   workflow_dispatch:
 
 jobs:
+  build-apk:name: Build Flutter APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
   build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.7.0'
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Accept Android licenses
+      run: |
+        yes | sdkmanager --licenses
+      env:
+        ANDROID_SDK_ROOT: ${{ env.HOME }}/Android/Sdk
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        api-level: 31
+        target: android-31
+        ndk: 23.0.7599858
+
+    - name: Build APK (release)
+      run: flutter build apk --release --no-shrink
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release.apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 5
+
     name: Build Android APK
     runs-on: ubuntu-latest
 
