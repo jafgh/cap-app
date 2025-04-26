@@ -1,91 +1,68 @@
+# اسم سير العمل الذي سيظهر في تبويب Actions في GitHub
 name: Build Flutter APK
 
+# متى يتم تشغيل سير العمل هذا؟
 on:
+  # التشغيل عند الدفع (push) إلى الفرع main (أو master حسب اسم فرعك الرئيسي)
   push:
-    branches: [ main ]
+    branches: [ main ] # <--- غيّر 'main' إذا كان اسم فرعك الرئيسي مختلفًا (مثل master)
+
+  # يسمح بالتشغيل اليدوي من تبويب Actions في GitHub
   workflow_dispatch:
 
+# الوظائف (Jobs) التي سيتم تنفيذها
 jobs:
-  build-apk:name: Build Flutter APK
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-jobs:
-  build-apk:
-    name: Build Android APK
+  # تعريف وظيفة البناء
+  build:
+    # نوع النظام الذي ستعمل عليه الوظيفة (أحدث نسخة من Ubuntu)
     runs-on: ubuntu-latest
 
+    # الخطوات التي ستنفذها الوظيفة بالترتيب
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      # 1. سحب الكود من المستودع إلى بيئة العمل المؤقتة
+      - name: Checkout repository
+        uses: actions/checkout@v4 # استخدام أحدث إصدار رئيسي من action السحب
 
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.7.0'
+      # 2. إعداد بيئة Java (مطلوبة لبناء تطبيقات Android)
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # توزيعة JDK شائعة ومفتوحة المصدر
+          java-version: '17'     # إصدار Java، Flutter يتطلب غالبًا 11 أو أحدث (17 خيار آمن)
 
-    - name: Install dependencies
-      run: flutter pub get
+      # 3. إعداد بيئة Flutter
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2 # action شائع لإعداد Flutter
+        with:
+          channel: 'stable' # استخدام القناة المستقرة من Flutter (الأكثر شيوعًا)
+          # flutter-version: '3.19.0' # يمكنك تحديد إصدار معين إذا كنت بحاجة لتثبيت إصدار محدد
 
-    - name: Accept Android licenses
-      run: |
-        yes | sdkmanager --licenses
-      env:
-        ANDROID_SDK_ROOT: ${{ env.HOME }}/Android/Sdk
+      # 4. عرض إصدار Flutter و Dart للتأكيد
+      - name: Show Flutter and Dart versions
+        run: |
+          flutter --version
+          dart --version
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-      with:
-        api-level: 31
-        target: android-31
-        ndk: 23.0.7599858
+      # 5. تحميل الاعتماديات الخاصة بالمشروع (المكتبات المحددة في pubspec.yaml)
+      - name: Get Flutter dependencies
+        run: flutter pub get
 
-    - name: Build APK (release)
-      run: flutter build apk --release --no-shrink
+      # 6. (اختياري ولكن مفيد) تحليل الكود للبحث عن أخطاء أو تحذيرات
+      - name: Analyze project source
+        run: flutter analyze
 
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-release.apk
-        path: build/app/outputs/flutter-apk/app-release.apk
-        retention-days: 5
+      # 7. بناء ملف APK (نسخة Release غير موقعة)
+      #    --release يبني نسخة محسنة وجاهزة للتوزيع (لكنها غير موقعة هنا)
+      #    يمكن استخدام --debug لبناء نسخة تصحيح أسرع ولكن أكبر حجمًا
+      - name: Build APK Release
+        run: flutter build apk --release
 
-    name: Build Android APK
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
-
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.7.0'
-
-    - name: Install dependencies
-      run: flutter pub get
-
-    - name: Accept Android licenses
-      run: |
-        yes | sdkmanager --licenses
-      env:
-        ANDROID_SDK_ROOT: ${{ env.HOME }}/Android/Sdk
-
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-      with:
-        api-level: 31
-        target: android-31
-        ndk: 23.0.7599858
-
-    - name: Build APK (release)
-      run: flutter build apk --release --no-shrink
-
-    - name: Upload APK Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: app-release.apk
-        path: build/app/outputs/flutter-apk/app-release.apk
+      # 8. رفع ملف APK الناتج كـ "أثر" (artifact) لسير العمل
+      #    هذا يتيح لك تحميل الملف بسهولة بعد انتهاء البناء من صفحة Actions
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4 # استخدام أحدث إصدار رئيسي
+        with:
+          name: release-apk          # اسم الأثر الذي سيظهر للتحميل
+          # المسار الافتراضي لملف APK المبني في وضع الـ release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error # إظهار خطأ إذا لم يتم العثور على الملف (للتحقق من نجاح البناء)
