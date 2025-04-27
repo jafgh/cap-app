@@ -21,7 +21,6 @@ dependencies:
   onnxruntime_flutter: ^1.11.1
   
   # OpenCV (تتطلب إعدادًا إضافيًا للنظام)
-  opencv: ^4.7.0
 
 dev_dependencies:
   flutter_test:
